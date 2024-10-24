@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Health Diagnosis</title>
+    <!-- Link to Google Fonts for styling -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Basic styling for body and layout */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e9ecef;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Full height of viewport */
+            flex-direction: column;
+        }
+        /* Styling for the main container */
+        .container {
+            max-width: 600px; /* Maximum width of container */
+            width: 100%; /* Full width */
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Light shadow effect */
+            margin: 20px;
+        }
+        /* Heading styles */
+        h1, h2 {
+            text-align: center;
+            color: #007bff; /* Primary color */
+        }
+        /* Input group styles for labels and inputs */
+        .input-group {
+            margin-bottom: 15px;
+            position: relative; /* Positioning for autocomplete */
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 700; /* Bold labels */
+        }
+        .input-group input {
+            width: 100%; /* Full width of input */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px; /* Rounded corners */
+            box-sizing: border-box; /* Include padding in width */
+            font-size: 16px;
+        }
+        /* Autocomplete dropdown list styles */
+        .autocomplete-list {
+            position: absolute; /* Position below input */
+            top: 100%; /* Align with the bottom of the input */
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-height: 150px; /* Max height of dropdown */
+            overflow-y: auto; /* Scroll if too many items */
+            z-index: 1000; /* Overlay above other elements */
+        }
+        /* Individual item in autocomplete list */
+        .autocomplete-item {
+            padding: 8px;
+            cursor: pointer; /* Pointer cursor on hover */
+        }
+        /* Highlight on hover */
+        .autocomplete-item:hover {
+            background-color: #f0f0f0;
+        }
+        /* Button styling */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none; /* No border */
+            border-radius: 5px; /* Rounded corners */
+            cursor: pointer; /* Pointer cursor */
+            margin: 10px 0;
+            transition: background-color 0.3s ease; /* Smooth transition */
+            width: 100%; /* Full width */
+            text-align: center; /* Center text */
+        }
+        /* Button hover effect */
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        /* Result display styles */
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa; /* Light background */
+            border-radius: 5px;
+            border-left: 4px solid #007bff; /* Colored left border */
+        }
+        .hidden {
+            display: none; /* Utility class to hide elements */
+        }
+        /* Footer styling */
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <!-- Initial screen with title and start button and email button-->
+    <div class="container" id="titleScreen">
+        <h1>Smart Health Diagnosis</h1>
+        <button class="btn" onclick="startDiagnosis()">Start Diagnosis</button>
+        <button class="btn" onclick="showDoctorNoteForm()">Doctor's Form</button>
+    </div>
+
+    <!-- Input screen for entering symptoms -->
+    <div class="container hidden" id="inputScreen">
+        <h2>Enter Your Symptoms</h2>
+        <form id="symptomForm">
+            <div class="input-group">
+                <label for="symptom1">Symptom 1</label>
+                <input type="text" id="symptom1" name="symptom1" oninput="filterSymptoms(this)" autocomplete="off" required>
+                <div class="autocomplete-list hidden" id="symptom1-list"></div> <!-- Autocomplete dropdown -->
+            </div>
+            <div class="input-group">
+                <label for="symptom2">Symptom 2</label>
+                <input type="text" id="symptom2" name="symptom2" oninput="filterSymptoms(this)" autocomplete="off" required>
+                <div class="autocomplete-list hidden" id="symptom2-list"></div> <!-- Autocomplete dropdown -->
+            </div>
+            <div class="input-group">
+                <label for="symptom3">Symptom 3</label>
+                <input type="text" id="symptom3" name="symptom3" oninput="filterSymptoms(this)" autocomplete="off" required>
+                <div class="autocomplete-list hidden" id="symptom3-list"></div> <!-- Autocomplete dropdown -->
+            </div>
+            <button class="btn" type="button" onclick="checkSymptoms()">Check Symptoms</button> <!-- Button to check symptoms -->
+        </form>
+    </div>
+
+    <!-- Result screen for displaying top diseases -->
+    <div class="container hidden" id="resultScreen">
+        <h2>Possible Disease Matches</h2>
+        <div id="results" class="result"></div> <!-- Area to display results -->
+        <!-- home screen button-->
+        <button class="btn" onclick="goHome()">Home</button>
+    </div>
+    <!--email screen-->
+    <div class="container hidden" id="doctor-note-form">
+        <h2>‎</h2>
+        <h3>‎         Doctor's Note Submission   </h3>
+        <h4>‎   </h4>
+        <!--Weird formating stuff ^  -->
+        <form id="doctorNoteForm">
+            <div class="input-group">
+                <label for="patientName">Patient Name</label>
+                <input type="text" id="patientName" name="patient_name" required>
+            </div>
+            <div class="input-group">
+                <label for="doctorEmail">Doctor's Email</label>
+                <input type="email" id="doctorEmail" name="doctor_email" required>
+            </div>
+            <div class="input-group">
+                <label for="replyEmail">Reply Email</label>
+                <input type="email" id="replyEmail" name="reply_email" required>
+            </div>
+            <div class="input-group">
+                <label for="patientPhone">Patient Phone Number</label>
+                <input type="tel" id="patientPhone" name="patient_phone" required>
+            </div>
+            <div class="input-group">
+                <label for="submissionDate">Date of Submission</label>
+                <input type="date" id="submissionDate" name="submission_date" required>
+            </div>
+            <div class="input-group">
+                <label for="symptoms">Notes</label>
+                <textarea id="symptoms" name="symptoms" required></textarea>
+            </div>
+            <button class="btn" type="button" onclick="submitDoctorNote()">Submit</button>
+            <button class="btn" type="button" onclick="goHome()">Home</button>
+        </form>
+    </div>
+    
+
+
+    <style>
+       .form-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px; /* Sharper edges */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%; /* Use 100% width for responsive design */
+            max-width: 20000px; /* Adjusted maximum width */
+            margin: 20px auto; /* Center the box horizontally */
+            display: flex;
+            flex-direction: column; /* Stack child elements vertically */
+            align-items: center; /* Center child elements horizontally */
+        }
+
+        .title {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .description {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-group {
+            width: 100%; /* Ensure the input group takes the full width */
+            max-width: 600px; /* Set a maximum width for input fields */
+            margin-bottom: 15px; /* Space between input groups */
+        }
+
+        .input-group label {
+            display: block;
+            margin: 10px 0 5px;
+            text-align: left; /* Align labels to the left */
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%; /* Full width within the input group */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Include padding in width calculation */
+        }
+
+        .submit-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px; /* Slightly rounded corners for button */
+            cursor: pointer;
+            width: 100%; /* Match the width of input fields */
+            max-width: 600px; /* Keep the button from being too wide */
+            margin: 10px 0;
+        }
+
+        .submit-button:hover {
+            background-color: #0056b3;
+        }
+
+    </style>
+    <footer>
+        <p>&copy; 2024 Aarush Palve and Nafay Faisel. All rights reserved. This site should not be used to make any medical decisions; consult a doctor before taking any action.</p>
+    </footer>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        let symptoms = []; // Array to store symptoms loaded from the CSV
+        let dieseaseResults = "";
+        // Function to start the diagnosis process
+        async function startDiagnosis() {
+            document.getElementById('titleScreen').classList.add('hidden'); // Hide the title screen
+            document.getElementById('inputScreen').classList.remove('hidden'); // Show the input screen
+            hideUMLS(); // Function to hide UMLS data if needed
+        }
+
+        // Function to load symptoms from the CSV file
+        async function loadSymptoms() {
+            const response = await fetch('Data.csv'); // Fetch CSV data
+            const data = await response.text(); // Convert response to text
+            const lines = data.trim().split('\n'); // Split lines into an array
+            symptoms = lines[0].split(',').slice(1, -1).map(symptom => { // Extract symptom names
+                const parts = symptom.split('_'); // Split by underscore for formatting
+                return parts.length > 1 ? parts[1] : parts[0]; // Return formatted symptom name
+            });
+        }
+
+        // Function to filter and display symptoms based on user input
+        function filterSymptoms(inputElement) {
+            const query = inputElement.value.toLowerCase(); // Get user input
+            const listElement = document.getElementById(`${inputElement.id}-list`); // Get corresponding autocomplete list
+            listElement.innerHTML = ''; // Clear the list
+
+            if (query) {
+                const filteredSymptoms = symptoms.filter(symptom => symptom.toLowerCase().includes(query)); // Filter symptoms
+                filteredSymptoms.forEach(symptom => {
+                    const item = document.createElement('div'); // Create a new item for the list
+                    item.classList.add('autocomplete-item'); // Add class for styling
+                    item.textContent = symptom; // Set item text
+                    item.onclick = () => { // On item click, set input value
+                        inputElement.value = symptom; // Set input to selected symptom
+                        listElement.classList.add('hidden'); // Hide the list
+                    };
+                    listElement.appendChild(item); // Append item to the list
+                });
+                listElement.classList.remove('hidden'); // Show the list
+            } else {
+                listElement.classList.add('hidden'); // Hide the list if input is empty
+            }
+        }
+
+        // Function to check the entered symptoms and find diseases
+        async function checkSymptoms() {
+            // Collect user input symptoms
+            const symptom1 = document.getElementById('symptom1').value.trim().toLowerCase();
+            const symptom2 = document.getElementById('symptom2').value.trim().toLowerCase();
+            const symptom3 = document.getElementById('symptom3').value.trim().toLowerCase();
+            const userSymptoms = [symptom1, symptom2, symptom3]; // Array of user symptoms
+
+            try {
+                // Fetch and parse the CSV data
+                const response = await fetch('Data.csv'); // Fetch CSV data
+                const csvText = await response.text(); // Convert response to text
+                const lines = csvText.trim().split('\n'); // Split lines into an array
+
+                // Create a 2D array from CSV data
+                const data = lines.map(line => line.split(',').map(item => item.trim())); // Convert each line to an array
+                
+                // Extract the symptom names (from the second column to the second last column)
+                const symptomNames = data[0].slice(1, -1); // Extract symptom names from the first line
+                
+                // Extract disease data
+                const diseases = data.slice(1).map(line => ({
+                    cases: parseInt(line[0], 10), // First column is cases
+                    symptoms: line.slice(1, -1).map(Number), // Convert symptoms to numbers (1s and 0s)
+                    diseaseName: line[line.length - 1] // Last column is the disease name
+                }));
+
+                // Calculate scores for each disease
+                const diseaseScores = diseases.map(diseaseData => {
+                    const { cases, symptoms, diseaseName } = diseaseData;
+                    let score = 0; // Initialize score
+
+                    // Iterate through each symptom
+                    userSymptoms.forEach((userSymptom, index) => {
+                        const symptomIndex = symptomNames.indexOf(userSymptom); // Get the index of the symptom
+                        if (symptomIndex !== -1 && symptoms[symptomIndex] === 1) { // Check if the disease can cause the symptom
+                            score++; // Increment score if symptom matches
+                        }
+                    });
+
+                    return { diseaseName, score, cases }; // Return disease data with score and cases
+                });
+
+                // Sort the diseases based on score and number of cases
+                diseaseScores.sort((a, b) => b.score - a.score || b.cases - a.cases); // Sort by score and cases
+                const mostLikelyDiseases = diseaseScores.slice(0, 5); // Get top 5 diseases
+
+                // Prepare the result text
+                let resultText = "";
+                mostLikelyDiseases.forEach(d => {
+                    const wikiLink = `https://en.wikipedia.org/wiki/${d.diseaseName.replace(' ', '_')}`; // Create Wikipedia link
+                    resultText += `<p>${d.diseaseName} | Cases per year: ${d.cases}, Matched symptoms: ${d.score} - <a href="${wikiLink}" target="_blank">Learn More</a></p>`; // Format result text
+                });
+
+                // Update the HTML with results
+                document.getElementById('inputScreen').classList.add('hidden'); // Hide input screen
+                document.getElementById('resultScreen').classList.remove('hidden'); // Show result screen
+
+                document.getElementById('results').innerHTML = resultText; // Update results area
+                hideUMLS(); // Hide UMLS data if needed
+                dieseaseResults = document.getElementById('results').innerHTML; //Store resultsText globally
+            } catch (error) {
+                console.error("Error fetching or processing CSV:", error); // Log any errors
+            }
+        }
+
+        // Function to hide UMLS data from all containers
+        function hideUMLS() {
+            const containers = document.querySelectorAll('.container'); // Select all containers
+            const umlsRegex = /UMLS:\w{9}/g; // Regex pattern to match UMLS IDs
+            containers.forEach(container => {
+                container.innerHTML = container.innerHTML.replace(umlsRegex, '').replace(/\^/g, ' '); // Remove UMLS IDs
+            });
+        }
+        //changes to the email screen
+        function showDoctorNoteForm() {
+            console.log(dieseaseResults); 
+            // Hides content
+            document.getElementById('titleScreen').classList.add('hidden'); // Hide the title screen
+            document.querySelector('.btn').style.display = 'none'; //hide email button
+            document.getElementById('resultScreen').classList.add('hidden'); //hide result screen page
+            // Show the form
+            document.getElementById('doctor-note-form').style.display = 'block';
+        }
+
+        (function(){
+            emailjs.init('NPG9mL_oWSYUdIuJs'); // Nafay's user ID
+        })();
+
+        function submitDoctorNote() {
+            const patientName = document.getElementById('patientName').value;
+            const doctorEmail = document.getElementById('doctorEmail').value;
+            const replyEmail = document.getElementById('replyEmail').value;
+            const patientPhone = document.getElementById('patientPhone').value;
+            const submissionDate = document.getElementById('submissionDate').value;
+            const symptoms = document.getElementById('symptoms').value;
+
+
+            // Logic to send the doctor's note
+            const templateParams = {
+                patient_name: patientName,
+                doctor_email: doctorEmail,
+                date: submissionDate,
+                notes: symptoms,
+                reply_to: replyEmail,
+                patient_phone: patientPhone
+            };
+            emailjs.send("service_zomv725", "template_7lw2gzh", templateParams) // Replace with your EmailJS service ID and template ID
+                .then((response) => {
+                    alert(`Doctor's note submitted for ${patientName}!`);
+                    document.getElementById("doctor-note-form").reset(); // Reset form fields
+                }, (error) => {
+                    alert("Error sending email: " + error.text);
+                });
+            
+
+            // Reset form and go back to the title screen
+            document.getElementById('doctorNoteForm').reset();
+            document.getElementById('titleScreen').classList.remove('hidden');
+        }
+        //old but kept for reference
+        function sendEmail(event) {
+            event.preventDefault();
+
+            const patientName = document.getElementById("patient-name").value;
+            const doctorEmail = document.getElementById("doctor-email").value;
+            const date = document.getElementById("date").value;
+            const symptoms = dieseaseResults;
+
+            console.log(dieseaseResults);
+            const templateParams = {
+                patient_name: patientName,
+                doctor_email: doctorEmail,
+                date: date,
+                symptoms: symptoms
+            };
+
+            emailjs.send("service_zomv725", "template_7lw2gzh", templateParams) // Replace with your EmailJS service ID and template ID
+                .then((response) => {
+                    alert("Email sent successfully!");
+                    document.getElementById("doctor-note-form").reset(); // Reset form fields
+                }, (error) => {
+                    alert("Error sending email: " + error.text);
+                });
+            //sets screen
+            //goHome()
+        }
+
+        function goHome() {
+            document.querySelectorAll('.container, .form-box').forEach(element => {
+                element.classList.add('hidden');
+            });
+            document.getElementById('doctor-note-form').style.display = 'none';
+            document.getElementById('titleScreen').classList.remove('hidden');
+            document.querySelector('.btn[onclick="startDiagnosis()"]').style.display = 'block';
+        }
+
+        // Load symptoms on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSymptoms(); // Call loadSymptoms function
+        });
+    </script>
+</body>
+</html>
